@@ -1,0 +1,108 @@
+﻿@page "/"
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject IConfiguration _config
+
+<PageTitle>Home</PageTitle>
+
+<h1>Total @responseData?.Holidays?.Count Days</h1>
+<MudSimpleTable Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped" Style="overflow-x: auto;">
+    <thead>
+        <tr>
+            @foreach (var h in headings)
+            {
+                <th>@h</th>
+            }
+        </tr>
+    </thead>
+    @if (responseData?.Holidays != null)
+    {
+        <tbody>
+            @foreach (var res in responseData?.Holidays!)
+            {
+                <tr>
+                    <td>@Convert.ToDateTime(res.Date).ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("th-TH"))
+                    </td>
+                    <td>@res.Name</td>
+                    <td></td>
+                </tr>
+            }
+        </tbody>
+    }
+
+</MudSimpleTable>
+
+@code {
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+    string[] headings = { "Date", "Weekday", "Name", "Notes" };
+
+    private ResponseData? responseData;
+    private string? responseCache;
+
+    protected override async Task OnInitializedAsync()
+    {
+        responseCache = await localStorage.GetItemAsync<string>("responseData");
+
+        var apiUrl = _config["apiUrl"];
+
+
+        if (responseCache == null)
+        {
+            responseData = await Http.GetFromJsonAsync<ResponseData>(apiUrl);
+            @* responseData = await
+Http.GetFromJsonAsync<ResponseData>("https://holidayapi.com/v1/holidays?pretty&key=ebdfeafd-c921-4ad7-bb23-73430d8da870&country=TH&language=th&public=true&year=2023");
+*@
+
+            await localStorage.SetItemAsync("responseData", System.Text.Json.JsonSerializer.Serialize(responseData));
+        }
+        else
+        {
+            responseData = System.Text.Json.JsonSerializer.Deserialize<ResponseData>(responseCache);
+        }
+    }
+
+    public class ResponseData
+    {
+        public long Status { get; set; }
+        public string? Warning { get; set; }
+        public Requests? Requests { get; set; }
+        public List<Holiday>? Holidays { get; set; }
+    }
+
+    public class Holiday
+    {
+        public string? Name { get; set; }
+        public string? Date { get; set; }
+        public string? Observed { get; set; }
+        public bool Public { get; set; }
+        @* public Country Country { get; set; } *@
+        public string? Uuid { get; set; }
+        @* public Weekday? Weekday { get; set; } *@
+    }
+
+    @* public class Weekday
+{
+public Date? Date { get; set; }
+public Date? Observed { get; set; }
+}
+
+public class Date
+{
+public Name Name { get; set; }
+public long Numeric { get; set; }
+} *@
+
+    public class Requests
+    {
+        public int Used { get; set; }
+        public int Available { get; set; }
+        public string? Resets { get; set; }
+    }
+
+    public enum Country { Th };
+
+    public enum Name { Friday, Monday, Saturday, Sunday, Thursday, Tuesday, Wednesday };
+}
