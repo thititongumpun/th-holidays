@@ -3,9 +3,14 @@
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject IConfiguration _config
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Thailand Holiday @DateTime.Now.Year</PageTitle>
 
-<h1>Total @responseData?.Holidays?.Count Days</h1>
+<div class="d-block pa-2 mud-theme-info mx-auto text-center">
+    <MudText Typo="Typo.h4" Class="text-center">Total @responseData?.Holidays?.Count Days</MudText>
+</div>
+
+<MudDivider />
+
 <MudSimpleTable Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped" Style="overflow-x: auto;">
     <thead>
         <tr>
@@ -48,14 +53,9 @@
 
         var apiUrl = _config["apiUrl"];
 
-
         if (responseCache == null)
         {
             responseData = await Http.GetFromJsonAsync<ResponseData>(apiUrl);
-            @* responseData = await
-Http.GetFromJsonAsync<ResponseData>("https://holidayapi.com/v1/holidays?pretty&key=ebdfeafd-c921-4ad7-bb23-73430d8da870&country=TH&language=th&public=true&year=2023");
-*@
-
             await localStorage.SetItemAsync("responseData", System.Text.Json.JsonSerializer.Serialize(responseData));
         }
         else
